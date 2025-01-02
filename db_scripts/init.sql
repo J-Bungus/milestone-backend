@@ -1,0 +1,109 @@
+CREATE TABLE IF NOT EXISTS "Users" (
+  id SERIAL PRIMARY KEY,
+  business VARCHAR(100) NOT NULL,
+  name VARCHAR(60) NOT NULL,
+  address VARCHAR(150),
+  email VARCHAR(50) NOT NULL,
+  phone VARCHAR(15) NOT NULL,
+  username VARCHAR(25),
+  password TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "IPAddresses" (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  ip INET NOT NULL,
+  verification_code TEXT,
+  FOREIGN KEY (user_id) 
+    REFERENCES "Users"(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Invoices" (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL,
+  total_price DECIMAL(10, 2) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  FOREIGN KEY (user_id)
+    REFERENCES "Users"(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Products" (
+  id SERIAL PRIMARY KEY,
+  msa_id VARCHAR(10) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  description TEXT NOT NULL,
+  unit_price DECIMAL(10, 2) NOT NULL,
+  unit_type VARCHAR(10) NOT NULL,
+  has_package BOOLEAN,
+  has_big_package BOOLEAN,
+  package_price DECIMAL(10, 2),
+  big_package DECIMAL (10, 2)
+);
+
+CREATE TABLE IF NOT EXISTS "Items" (
+  id SERIAL PRIMARY KEY,
+  invoice_id INT NOT NULL,
+  product_id INT NOT NULL,
+  amount INT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  FOREIGN KEY(invoice_id)
+    REFERENCES "Invoices"(id)
+    ON DELETE CASCADE,
+  FOREIGN KEY(product_id)
+    REFERENCES "Products"(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Images" (
+  id SERIAL PRIMARY KEY,
+  product_id INT NOT NULL,
+  source TEXT,
+  FOREIGN KEY(product_id)
+    REFERENCES "Products"(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Carts" (
+	id SERIAL PRIMARY KEY,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	user_id INT NOT NULL,
+	FOREIGN KEY (user_id)
+		REFERENCES "Users"(id)
+		ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "CartItems" (
+	id SERIAL PRIMARY KEY,
+	cart_id INT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	product_id INT NOT NULL,
+	amount INT NOT NULL,
+	FOREIGN KEY(cart_id)
+		REFERENCES "Carts"(id)
+		ON DELETE CASCADE,
+	FOREIGN KEY(product_id)
+		REFERENCES "Products"(id)
+		ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "Categories" (
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(255) NOT NULL,
+	parent_id INTEGER REFERENCES "Categories"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "ProductCategory" (
+	id SERIAL PRIMARY KEY,
+	category_id INTEGER NOT NULL,
+	product_id INTEGER NOT NULL,
+	FOREIGN KEY (category_id)
+		REFERENCES "Categories"(id)
+		ON DELETE CASCADE,
+	FOREIGN KEY (product_id)
+		REFERENCES "Products"(id)
+		ON DELETE CASCADE
+);

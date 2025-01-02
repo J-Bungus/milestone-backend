@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "milestone-auto-supplies",
+  "private_key_id": "0faca7ffdc3b265a6f85c6226473fea5694293c2",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCuRRUSHELc0A5G\npbRgJP3iBOeSGFEVjQVIQi67ACf7zXMVsCUD8viemIKFbWll9HgO3ZBvlXi1A3AZ\n7bXMc9rncYLRtotSs2M1W02aeeuRyPlIBZky0PWzjulpAuuQWtUER/pQmqgEj/mg\nt/p/pwg69b+yUwgIiAzwcVkLcECQ77UL0HuURAV7Mo8vk1RKt6a6W1pusduDGTB1\n5gN6vTdl97XOr/9DAyS8ok7+Ro6D+USrFP5UMfqRtmJ0Np/jmgVRphT6G6i92AhZ\nHw9Gfad3k950Px4OpyuCU4Ejzq7xm9anN7HOAROPS5N0CsgMXGVYZSp2bEnYVFui\ngFL1EcCxAgMBAAECggEADE5eDMuYmsxeubVBXcm28O3nkWJCCuYiBvEqKMk7yZT/\nk7rpfj7Qji3XB7I1z2iPotMZZuZ0oemxJ0TpQdu2NqzwxTuMA/DIKHAptHx4EAZ+\nY0wxPjdR0RZzhpduyDXrKsnPaWo7w6i2wsHt1fOsXzIpPDU5+7+UaaqYvw1JTe1g\nJmIUxMIrLo885nbEjEJledcNkSTBrihV8e+qIK02QMF6ER8T82Ci6yb7G9fm4cPQ\ny2uMiJSziH0mgdf5cm1rKKollGH1oYlzgjwBgnjxRlFod6zK/FhdItiFhkNzRRJT\nR3RnLUtolQu9VS0vU1bRmhPNhZbs2J1jRDt0BXsHbQKBgQDofevNdSawONLAocoU\nE1nnL2aEVzc+yxb6Tf3bT5O2afYv0GNIaWvmgcjjxr1Jnj9PGzqCxAx3aMVhaeO/\n1q/0byS+JBYlMTW6zh3y/YGB+D3M5+OVDfqQf9BDNljfJSmvyxv6+wlRasW6kWT9\nfuEzirpPUX0LnOyUVc/BwtAK3QKBgQC/5BPPhL0v5hjULivqlIzEnT3SgiEwZA5I\nhjvbPcx/ag34X4deZ/A0B/RZHXjrfM2dx7Q+PNKEe0r5/ODULmgat6CVh++BocUB\nwPb5XPh9uzAPP3/WQO/vl0cPZl6b9hWwee4NZuEal3PhdG7mE206+4HJi7cpDYfN\n2RIc6mEd5QKBgQDSfm+oLZFBq7Dkx5b2Zi7XqYrf9zcFm0rKhSJ6FapfVcCXucyq\nGwieQpNn5uAqbyRSswxeqLHAyxMqB300i2Pzo01Y+cMzGULURxnGjs9apS8O/kSH\nB4j8mzwsHmCIaFU93F8Q9YiSNmGfcVRGT0IGMGxOtDDK+uEXzDm17HP/4QKBgQC5\nUI9dOojmSCW0S763taxYeK5qrKdWr1on6hLGQWFLr2U8dy0pG+Garg/pPBA6A3Yj\nKOjFrkF0FgmrcO7DmumI28tmfTftDghPEEazPXjxG6RnJWDUzjOpQ4QpuCgoIDiE\nDMy7/p3n61nK4oHzCdHUQ23s8VP6fomnXzoh2KvfjQKBgCEdmXP8admuB0WjPWMx\nfvZe2kMKhdFjSO40xo5krAdCh69ln9SUymAdGaYkJiva/nfpbesAAPtznFv4iqOi\nzOs15Gnfze8aknwMUHV1O0oxJdUfw12c4ay9hQrNjdqA60zp3astfucycJc+esnl\ncpKfHKnlbgn9Cxzy22lnMUgY\n-----END PRIVATE KEY-----\n",
+  "client_email": "milestone-auto-supplies-accoun@milestone-auto-supplies.iam.gserviceaccount.com",
+  "client_id": "108613459983748391222",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/milestone-auto-supplies-accoun%40milestone-auto-supplies.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
