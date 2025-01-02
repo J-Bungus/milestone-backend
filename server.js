@@ -12,7 +12,7 @@ const path = require('path');
 const errorHandler = require("./middleware/errorHandler");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-morgan.token("clientIp", (req) => (req.headers["x-forwarded-for"] || req.clientIp || req.ip || req._remoteAddress || "unknown") );
+morgan.token("clientIp", (req) => (req.headers["x-forwarded-for"] || req.clientIp || req.ip || req._remoteAddress || "unknown"));
 const storage = new Storage({
   keyFilename: path.join(__dirname, process.env.GCP_CREDENTIALS),
   projectId: process.env.GCP_PROJECT_ID
@@ -27,13 +27,24 @@ const upload = multer({ storage: multer.memoryStorage() });
 global.upload = upload;
 
 const Pool = pg.Pool;
-global.pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  host: process.env.POSTGRES_HOST,
-  port: process.env.POSTGRES_PORT,
-  database: process.env.POSTGRES_DATABASE
-});
+global.pool = process.env.ENV === 'dev'
+  ? new Pool({
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    database: process.env.POSTGRES_DATABASE
+  })
+  : new Pool({
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    database: process.env.POSTGRES_DATABASE,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
 
 global.sgMail = sgMail;
 
@@ -50,8 +61,8 @@ app.options("*", cors({
 }));
 
 app.use(bodyParser.urlencoded({ limit: '250kb', extended: false }));
-app.use(bodyParser.json({limit: '250kb'}));
-app.use(morgan(":method :url - :clientIp", { immediate : true }));
+app.use(bodyParser.json({ limit: '250kb' }));
+app.use(morgan(":method :url - :clientIp", { immediate: true }));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
