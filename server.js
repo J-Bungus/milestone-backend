@@ -38,7 +38,17 @@ global.pool = new Pool({
 global.sgMail = sgMail;
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: `${process.env.WEBSITE_URL}`,
+  methods: 'GET,POST,PATCH,PUT,DELETE',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
+app.options("*", cors({
+  origin: `${process.env.WEBSITE_URL}`,
+  methods: 'GET,POST,PATCH,PUT,DELETE',
+  allowedHeaders: 'Content-Type,Authorization'
+}));
+
 app.use(bodyParser.urlencoded({ limit: '250kb', extended: false }));
 app.use(bodyParser.json({limit: '250kb'}));
 app.use(morgan(":method :url - :clientIp", { immediate : true }));

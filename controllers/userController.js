@@ -168,7 +168,7 @@ const sendForgotPasswordEmail = asyncHandler(async (req, res) => {
       subject: `Milestone Autosupplies Password Reset`,
       html: `
         <div>Here is the link to reset your password:
-          <a href="${process.env.TEST_WEBSITE_URL}reset-password?token=${resetToken}"> Reset Password</a>
+          <a href="${process.env.WEBSITE_URL}/reset-password?token=${resetToken}"> Reset Password</a>
         </div>
       `
     });
