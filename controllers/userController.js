@@ -33,11 +33,13 @@ const loginUser = asyncHandler(async (req, res) => {
       return;
     }
 
-    const ip = await IPAddressModel.getIPsByUserId(user.id);
+    const ips = await IPAddressModel.getIPsByUserId(user.id);
     let requireVerification = false;
     const splitIP = req.ip.split(":");
     const clientIP = splitIP[splitIP.length-1];
-    if (ip.length > 0 && !ip.reduce((acc, curr) => acc || curr.ip === clientIP, false)) {
+    console.log(ips);
+    console.log(clientIP);
+    if (ips.length > 0 && ips.every(ip => ip !== clientIP)) {
       requireVerification = true;
       try {
         const verification = await twilio.verifications.create({
