@@ -35,10 +35,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const ips = await IPAddressModel.getIPsByUserId(user.id);
     let requireVerification = false;
-    const splitIP = req.ip.split(":");
-    const clientIP = splitIP[splitIP.length-1];
-    console.log(ips);
-    console.log(clientIP);
+    const clientIP = req.headers["x-forwarded-for"] || req.clientIp || req.ip?.split(":").at(-1) || req._remoteAddress;
+    
     if (ips.length > 0 && ips.every(ip => ip !== clientIP)) {
       requireVerification = true;
       try {
