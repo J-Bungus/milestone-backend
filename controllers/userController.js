@@ -42,7 +42,7 @@ const loginUser = asyncHandler(async (req, res) => {
       console.log(ip.ip);
     });
 
-    ips.every(ip => {
+    ips.map(ip => {
       console.log(ip);
 
       return true;
