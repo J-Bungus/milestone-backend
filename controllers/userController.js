@@ -37,8 +37,15 @@ const loginUser = asyncHandler(async (req, res) => {
     let requireVerification = false;
     const clientIP = req.headers["x-forwarded-for"] || req.clientIp || req.ip?.split(":").at(-1) || req._remoteAddress;
     console.log(ips);
-    console.log(ips[0].ip);
-    console.log(ips.every(ip => ip.ip !== String(clientIP)));
+    ips.map(ip => {
+      console.log(ip);
+      console.log(ip.ip);
+    });
+
+    ips.every(ip => {
+      console.log(ip);
+      console.log(ip.ip);
+    })
     if (ips.length > 0 && ips.every((ip) => { console.log(ip); ip.ip !== String(clientIP)})) {
       requireVerification = true;
       try {
