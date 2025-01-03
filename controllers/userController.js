@@ -44,8 +44,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
     ips.every(ip => {
       console.log(ip);
-      console.log(ip.ip);
-    })
+
+      return true;
+    });
     if (ips.length > 0 && ips.every((ip) => { console.log(ip); ip.ip !== String(clientIP)})) {
       requireVerification = true;
       try {
