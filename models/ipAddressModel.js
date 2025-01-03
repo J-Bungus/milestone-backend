@@ -5,7 +5,7 @@ class IPAddressModel {
 
   async getIPsByUserId (userId) {
     const ip = await pool.query(`
-      SELECT ip FROM "${this.table}"
+      SELECT * FROM "${this.table}"
       WHERE user_id = ${userId}
     `);
 
