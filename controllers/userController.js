@@ -36,8 +36,8 @@ const loginUser = asyncHandler(async (req, res) => {
     const ips = await IPAddressModel.getIPsByUserId(user.id);
     let requireVerification = false;
     const clientIP = req.headers["x-forwarded-for"] || req.clientIp || req.ip?.split(":").at(-1) || req._remoteAddress;
-
-    if (ips.length > 0 && ips.every(ip => ip.ip !== String(clientIP))) {
+    console.log(ips);
+    if (ips.length > 0 && ips.every(({ ip }) => ip !== String(clientIP))) {
       requireVerification = true;
       try {
         const verification = await twilio.verifications.create({
