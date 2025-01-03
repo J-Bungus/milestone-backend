@@ -37,7 +37,7 @@ const loginUser = asyncHandler(async (req, res) => {
     let requireVerification = false;
     const clientIP = req.headers["x-forwarded-for"] || req.clientIp || req.ip?.split(":").at(-1) || req._remoteAddress;
 
-    if (ips.length > 0 && ips.reduce((acc, curr) => acc && curr !== clientIP, true)) {
+    if (ips.length > 0 && ips.every((ip) => ip && ip !== String(clientIP))) {
       requireVerification = true;
       try {
         const verification = await twilio.verifications.create({
@@ -51,7 +51,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("An error occurred while sending verification code");
       }
 
-    } else if (ip.length === 0) {
+    } else if (ips.length === 0) {
       const newIp = await IPAddressModel.createIP(clientIP, user);
     }
 
