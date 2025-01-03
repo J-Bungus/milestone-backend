@@ -9,7 +9,7 @@ class IPAddressModel {
       WHERE user_id = ${userId}
     `);
 
-    return ip?.rows || undefined;
+    return ip?.rows?.map(row => row.ip) || undefined;
   };
 
   async createIP (ip, user, code = null) {
