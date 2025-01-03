@@ -98,7 +98,10 @@ const changePassword = asyncHandler(async (req, res) => {
     userInfo.id = req.user.id;
     userInfo.password_reset_token = null;
 
-    let updatedUser = await UserModel.createOrUpdateUser({...userInfo});
+    let updatedUser;
+    if (!userInfo.iat && !userInfo.exp) {
+      updatedUser = await UserModel.createOrUpdateUser({...userInfo});
+    }
 
     updatedUser = await UserModel.updatePassword({...userInfo}, hashedPass);
     res.status(200).json({ userInfo: updatedUser });
