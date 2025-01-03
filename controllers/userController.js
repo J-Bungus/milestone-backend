@@ -39,7 +39,7 @@ const loginUser = asyncHandler(async (req, res) => {
     console.log(ips);
     console.log(ips[0].ip);
     console.log(ips.every(ip => ip.ip !== String(clientIP)));
-    if (ips.length > 0 && ips.every(({ ip }) => ip !== String(clientIP))) {
+    if (ips.length > 0 && ips.every((ip) => { console.log(ip); ip.ip !== String(clientIP)})) {
       requireVerification = true;
       try {
         const verification = await twilio.verifications.create({
