@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS "Users" (
   phone VARCHAR(15) NOT NULL,
   username VARCHAR(25),
   password TEXT,
+  password_reset_token TEXT,
+  is_admin BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -14,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "IPAddresses" (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL,
   ip INET NOT NULL,
-  verification_code TEXT,
+  code TEXT,
   FOREIGN KEY (user_id) 
     REFERENCES "Users"(id)
     ON DELETE CASCADE
@@ -24,6 +26,7 @@ CREATE TABLE IF NOT EXISTS "Invoices" (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL,
   total_price DECIMAL(10, 2) NOT NULL,
+  sent BOOLEAN DEFAULT 'false',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   FOREIGN KEY (user_id)
     REFERENCES "Users"(id)
@@ -40,7 +43,9 @@ CREATE TABLE IF NOT EXISTS "Products" (
   has_package BOOLEAN,
   has_big_package BOOLEAN,
   package_price DECIMAL(10, 2),
-  big_package DECIMAL (10, 2)
+  big_package_price DECIMAL (10, 2),
+  package_size INT,
+  big_package_size INT
 );
 
 CREATE TABLE IF NOT EXISTS "Items" (
@@ -49,6 +54,7 @@ CREATE TABLE IF NOT EXISTS "Items" (
   product_id INT NOT NULL,
   amount INT NOT NULL,
   price DECIMAL(10, 2) NOT NULL,
+  package_type VARCHAR(20),
   FOREIGN KEY(invoice_id)
     REFERENCES "Invoices"(id)
     ON DELETE CASCADE,
@@ -82,6 +88,7 @@ CREATE TABLE IF NOT EXISTS "CartItems" (
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	product_id INT NOT NULL,
 	amount INT NOT NULL,
+    package_type VARCHAR(20),
 	FOREIGN KEY(cart_id)
 		REFERENCES "Carts"(id)
 		ON DELETE CASCADE,
@@ -93,7 +100,9 @@ CREATE TABLE IF NOT EXISTS "CartItems" (
 CREATE TABLE IF NOT EXISTS "Categories" (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(255) NOT NULL,
-	parent_id INTEGER REFERENCES "Categories"(id) ON DELETE CASCADE
+	parent_id INTEGER REFERENCES "Categories"(id) ON DELETE CASCADE,
+    is_leaf VARCHAR(10) DEFAULT 'false',
+	order_index INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS "ProductCategory" (
@@ -107,3 +116,6 @@ CREATE TABLE IF NOT EXISTS "ProductCategory" (
 		REFERENCES "Products"(id)
 		ON DELETE CASCADE
 );
+
+INSERT INTO "Users" (business, name, email, phone, username, password, is_admin)
+VALUES ('Admin', 'Justin Wang', 'justin.wang1ab@gmail.com', '4166182704', 'admin0', 'temp', TRUE);

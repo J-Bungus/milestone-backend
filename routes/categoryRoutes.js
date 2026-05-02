@@ -5,7 +5,8 @@ const {
   updateCategory,
   deleteCategory,
   fetchAllCategories,
-  fetchLeafCategories
+  fetchLeafCategories,
+  fetchLeafCategoriesWithPath
 } = require("../controllers/categoryController");
 const {
   categorizeProducts
@@ -19,11 +20,12 @@ const {
 const router = express.Router();
 
 router.get(`/fetch/by-parent/:parent_id?`, validateAdminToken, fetchCategoriesByParent);
-router.get('/fetch/all', validateToken, fetchAllCategories);
+router.get('/fetch/all', fetchAllCategories);
 router.post(`/add`, validateAdminToken, addNewCategory);
 router.patch(`/update`, validateAdminToken, updateCategory);
 router.delete('/delete/:category_id', validateAdminToken, deleteCategory);
 router.post('/categorize', validateAdminToken, categorizeProducts);
-router.get('/fetch/all/leaf', validateToken, fetchLeafCategories);
+router.get('/fetch/all/leaf', fetchLeafCategories);
+router.get('/fetch/all/leaf-paths', fetchLeafCategoriesWithPath);
 
 module.exports = router;

@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const mail = require("@sendgrid/mail");
 const UserModel = new (require("../models/userModel"))();
 const IPAddressModel = new (require("../models/ipAddressModel"))();
 
@@ -157,30 +158,49 @@ const sendForgotPasswordEmail = asyncHandler(async (req, res) => {
   const { username } = req.body;
 
   const user = await UserModel.getOneByUsername(username);
-  const resetToken = jwt.sign({ id: user.id , username: user.username }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
-
+  
   if (!user) {
     res.status(404);
     throw new Error("The username does not match any of our records");
   }
 
+  // Generate the token only after ensuring the user exists
+  const resetToken = jwt.sign({ id: user.id , username: user.username }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10m' });
+  console.log("user email:", user.email);
+  console.log("env email:", process.env.MAILJET_SENDER_EMAIL);
   try {
-    const response = await sgMail.send({
-      to: user.email,
-      from: process.env.SENDGRID_TEST_SENDER,
-      subject: `Milestone Autosupplies Password Reset`,
-      html: `
-        <div>Here is the link to reset your password:
-          <a href="${process.env.WEBSITE_URL}/reset-password?token=${resetToken}"> Reset Password</a>
-        </div>
-      `
-    });
+    const response = await mailjet
+      .post("send", { 'version': 'v3.1' })
+      .request({
+        "Messages": [
+          {
+            "From": {
+              "Email": process.env.MAILJET_SENDER_EMAIL, // Must be a verified sender in Mailjet
+              "Name": "Milestone Autosupplies"
+            },
+            "To": [
+              {
+                "Email": user.email,
+                "Name": user.name
+              }
+            ],
+            "Subject": "Milestone Autosupplies Password Reset",
+            "HTMLPart": `
+              <div>Here is the link to reset your password:
+                <a href="${process.env.WEBSITE_URL}/reset-password?token=${resetToken}"> Reset Password</a>
+              </div>
+            `
+          }
+        ]
+      });
+    
+    console.log(response);
 
     delete user.created_at;
     await UserModel.createOrUpdateUser({...user, password_reset_token: resetToken });
     res.status(200).end();
   } catch (error) {
-    console.error(error);
+    console.error(error.statusCode, error.message);
     res.status(500);
     throw new Error("An error occurred while sending email");
   }

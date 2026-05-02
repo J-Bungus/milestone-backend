@@ -17,7 +17,7 @@ class UserModel {
       SELECT * FROM "${this.table}"
       WHERE username = '${username}'
     `);
-
+    console.log("HELLO?", query.rows[0]);
     return query.rows[0];
   }
 

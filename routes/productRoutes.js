@@ -6,7 +6,8 @@ const {
   fetchProductByMSAID,
   fetchAllProductOnlyMSAID,
   fetchProductsByCategoryOnlyMSAID,
-  fetchProductsByCategory
+  fetchProductsByCategory,
+  searchCategoryProducts
 } = require("../controllers/productController");
 const {
   validateToken,
@@ -15,12 +16,13 @@ const {
 
 const router = express.Router();
 
-router.get("/all", validateToken, fetchAllProducts);
-router.get("/search", validateToken, fetchProductsBySearchTerm);
+router.get("/all", fetchAllProducts);
+router.get("/search", fetchProductsBySearchTerm);
 router.post("/create", validateAdminToken, upload.array("images"), addNewProduct);
-router.get("/specific/:msa_id", validateToken, fetchProductByMSAID);
+router.get("/specific/:msa_id", fetchProductByMSAID);
 router.get("/all-msa_id", validateAdminToken, fetchAllProductOnlyMSAID);
-router.get("/all/category/:category_id", validateToken, fetchProductsByCategoryOnlyMSAID);
-router.get("/search-category", validateToken, fetchProductsByCategory);
+router.get("/all/category/:category_id", fetchProductsByCategoryOnlyMSAID);
+router.get("/search-category", fetchProductsByCategory);
+router.get("/search-in-category", searchCategoryProducts);
 
 module.exports = router;

@@ -73,6 +73,39 @@ class CategoryModel {
 
     return query.rows;
   }
+
+  async getLeafCategoriesWithPath() {
+    const query = `
+      WITH RECURSIVE CategoryTree AS (
+        -- Base case: Top-level categories
+        SELECT id, name, parent_id, name::text AS path
+        FROM "Categories"
+        WHERE parent_id IS NULL
+        
+        UNION ALL
+        
+        -- Recursive step: Append child name to parent's path
+        SELECT c.id, c.name, c.parent_id, ct.path || ' > ' || c.name
+        FROM "Categories" c
+        INNER JOIN CategoryTree ct ON c.parent_id = ct.id
+      )
+      -- Select only the leaf nodes (categories that have no children)
+      SELECT id, name, path 
+      FROM CategoryTree ct
+      WHERE NOT EXISTS (
+        SELECT 1 FROM "Categories" child WHERE child.parent_id = ct.id
+      )
+      ORDER BY path;
+    `;
+
+    try {
+      const result = await pool.query(query);
+      return result.rows;
+    } catch (error) {
+      console.error("Error fetching leaf categories with path:", error);
+      throw error;
+    }
+  }
 }
 
 module.exports = CategoryModel;

@@ -10,11 +10,19 @@ const { Storage } = require('@google-cloud/storage');
 const client = require('twilio')(process.env.TWILIO_ACCOUNT_ID, process.env.TWILIO_AUTH_TOKEN);
 const path = require('path');
 const errorHandler = require("./middleware/errorHandler");
+const Mailjet = require('node-mailjet');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const mailjet = Mailjet.apiConnect(
+  process.env.MAILJET_API_KEY,
+  process.env.MAILJET_SECRET_KEY
+);
+
+global.mailjet = mailjet;
+
 morgan.token("clientIp", (req) => (req.headers["x-forwarded-for"] || req.clientIp || req.ip || req._remoteAddress || "unknown"));
 const storage = new Storage({
-  keyFilename: path.join(__dirname, process.env.GCP_CREDENTIALS),
+  keyFilename: path.join(process.cwd(), process.env.GCP_CREDENTIALS),
   projectId: process.env.GCP_PROJECT_ID
 });
 
@@ -27,6 +35,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 global.upload = upload;
 
 const Pool = pg.Pool;
+
 global.pool = process.env.ENV === 'dev'
   ? new Pool({
     user: process.env.POSTGRES_USER,

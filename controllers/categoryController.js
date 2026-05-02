@@ -85,4 +85,18 @@ const fetchLeafCategories = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { fetchCategoriesByParent, addNewCategory, updateCategory, deleteCategory, fetchAllCategories, fetchLeafCategories};
+// Add this alongside your other controller functions
+const fetchLeafCategoriesWithPath = asyncHandler(async (req, res) => {
+  try {
+    // Call our brand new model function
+    const categories = await CategoryModel.getLeafCategoriesWithPath();
+    res.status(200).json({ categories });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+    throw new Error("An error occurred while fetching category paths");
+  }
+});
+
+
+module.exports = { fetchCategoriesByParent, addNewCategory, updateCategory, deleteCategory, fetchAllCategories, fetchLeafCategories, fetchLeafCategoriesWithPath};

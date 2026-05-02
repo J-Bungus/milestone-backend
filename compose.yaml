@@ -34,7 +34,7 @@ services:
         - milestones_data:/var/lib/postgresql/data
         - ./db_scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
       ports:
-        - "5433:5433"
+        - "5433:5432"
 volumes:
   milestones_data:
 

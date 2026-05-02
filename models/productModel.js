@@ -28,7 +28,7 @@ class ProductModel {
         ARRAY_AGG(DISTINCT "Images".source) as images,
         ARRAY_AGG(DISTINCT "Categories".name) as categories
       FROM "${this.table}"
-      JOIN "Images" ON "${this.table}".id = "Images".product_id
+      LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       GROUP BY "${this.table}".id
@@ -168,6 +168,90 @@ class ProductModel {
       SELECT id, msa_id FROM "${this.table}"
     `);
     return query.rows;
+  }
+
+  // --- 1. Fetching the filtered products (Replaces your current function) ---
+  async getProductsByCategoryAndDescendants(categoryId, page = 0, itemsPerPage = 40, searchTerm = "") {
+    const offset = page * itemsPerPage;
+    const values = [categoryId]; // $1
+    
+    let query = `
+      WITH RECURSIVE CategoryTree AS (
+        -- Base case: Get the initial parent category
+        SELECT id FROM "Categories" 
+        WHERE id = $1
+        
+        UNION ALL
+        
+        -- Recursive step: Get all children
+        SELECT c.id FROM "Categories" c
+        INNER JOIN CategoryTree ct ON c.parent_id = ct.id
+      )
+      SELECT 
+        p.*,
+        -- Aggregate the images into a JSON array using your specific schema
+        COALESCE(
+          json_agg(
+            pi.source
+          ) FILTER (WHERE pi.id IS NOT NULL), 
+          '[]'
+        ) AS images
+      FROM "Products" p
+      JOIN "ProductCategory" pc ON p.id = pc.product_id
+      LEFT JOIN "Images" pi ON p.id = pi.product_id
+      WHERE pc.category_id IN (SELECT id FROM CategoryTree)
+    `;
+
+    // If the user typed a search term, add the SQL ILIKE filter
+    if (searchTerm) {
+      // Searching by product name OR msa_id. (Adjust column names if needed!)
+      query += ` AND (p.name ILIKE $2 OR p.msa_id ILIKE $2)`;
+      values.push(`%${searchTerm}%`); // $2
+    }
+
+    // Add grouping, limits, and offsets for pagination
+    query += ` GROUP BY p.id LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    values.push(itemsPerPage, offset);
+
+    try {
+      // Execute with the parameters array to prevent SQL injection
+      const result = await pool.query(query, values);
+      return result.rows;
+    } catch (error) {
+      console.error("Error fetching filtered category products:", error);
+      throw error;
+    }
+  }
+
+  // --- 2. Getting the total count so the Pagination UI knows how many pages there are ---
+  async countProductsByCategoryAndDescendants(categoryId, searchTerm = "") {
+    const values = [categoryId]; // $1
+    
+    let query = `
+      WITH RECURSIVE CategoryTree AS (
+        SELECT id FROM "Categories" WHERE id = $1
+        UNION ALL
+        SELECT c.id FROM "Categories" c INNER JOIN CategoryTree ct ON c.parent_id = ct.id
+      )
+      SELECT COUNT(DISTINCT p.id) 
+      FROM "Products" p
+      JOIN "ProductCategory" pc ON p.id = pc.product_id
+      WHERE pc.category_id IN (SELECT id FROM CategoryTree)
+    `;
+
+    // Make sure the count query uses the exact same filter!
+    if (searchTerm) {
+      query += ` AND (p.name ILIKE $2 OR p.msa_id ILIKE $2)`;
+      values.push(`%${searchTerm}%`); // $2
+    }
+
+    try {
+      const result = await pool.query(query, values);
+      return parseInt(result.rows[0].count);
+    } catch (error) {
+      console.error("Error counting category products:", error);
+      throw error;
+    }
   }
 }
 
