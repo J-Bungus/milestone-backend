@@ -21,15 +21,22 @@ const mailjet = Mailjet.apiConnect(
 global.mailjet = mailjet;
 
 morgan.token("clientIp", (req) => (req.headers["x-forwarded-for"] || req.clientIp || req.ip || req._remoteAddress || "unknown"));
-const storage = new Storage({
-  keyFilename: path.join(process.cwd(), process.env.GCP_CREDENTIALS),
+let storageOptions = {
   projectId: process.env.GCP_PROJECT_ID
-});
+};
+
+if (process.env.ENV === 'dev') {
+  storageOptions.keyFilename = path.join(process.cwd(), process.env.GCP_CREDENTIALS);
+} else {
+  storageOptions.credentials = JSON.parse(process.env.GCP_CREDENTIALS);
+}
+
+const storage = new Storage(storageOptions);
+const bucket = storage.bucket(process.env.GCP_BUCKET);
+global.bucket = bucket;
 
 global.twilio = client.verify.v2.services(process.env.TWILIO_SERVICE_SID);
 
-const bucket = storage.bucket(process.env.GCP_BUCKET);
-global.bucket = bucket;
 
 const upload = multer({ storage: multer.memoryStorage() });
 global.upload = upload;

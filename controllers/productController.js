@@ -8,7 +8,7 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
   let products = [];
   let count = 0;
   try {
-    products = await ProductModel.getAllWithImages(page, itemsPerPage);
+    products = await ProductModel.getAlrlWithImages(page, itemsPerPage);
     count = await ProductModel.countAllProducts();
   } catch (error) {
     console.log(error);
