@@ -92,6 +92,58 @@ const addNewProduct = asyncHandler(async (req, res) => {
   }
 });
 
+const updateExistingProduct = asyncHandler(async (req, res) => {
+  const product = JSON.parse(req.body.product);
+
+  try {
+    delete product.images;
+    const updatedProduct = await ProductModel.updateProduct(product);
+
+    if (req.files && req.files.length > 0) {
+      const fileUrls = [];
+      for (const file of req.files) {
+        const filePath = file.originalname.split("/");
+        const filename = filePath[filePath.length - 1];
+        const blob = bucket.file(`${updatedProduct.msa_id}-${filename}`);
+        const blobStream = blob.createWriteStream({
+          resumable: false,
+          contentType: file.mimetype
+        });
+
+        await new Promise((resolve, reject) => {
+          blobStream.on('error', reject);
+          blobStream.on('finish', async () => {
+            fileUrls.push(blob.name);
+            resolve();
+          });
+
+          blobStream.end(file.buffer);
+        });
+      }
+
+      fileUrls.map(async file => {
+        const imgSrc = await ProductModel.uploadImage(file, updatedProduct.id);
+        console.log(imgSrc);
+      });
+    }
+
+    await ProductCategoryModel.deleteCategoriesByProductId(updatedProduct.id);
+    for (const category_id of product.categories) {
+      await ProductCategoryModel.assignCategory(updatedProduct.id, category_id);
+    }
+
+    res.status(200).json({ product: {
+      ...updatedProduct,
+      images: fileUrls
+    }});  
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+    throw new Error("An error occurred while updating product");
+  }
+});
+
+
 const fetchProductByMSAID = asyncHandler(async (req, res) => {
   const { msa_id } = req.params;
 
@@ -198,4 +250,4 @@ const searchCategoryProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { fetchAllProducts, fetchProductsBySearchTerm, addNewProduct, fetchProductByMSAID, fetchAllProductOnlyMSAID, fetchProductsByCategoryOnlyMSAID, fetchProductsByCategory, searchCategoryProducts };
+module.exports = { fetchAllProducts, fetchProductsBySearchTerm, addNewProduct, fetchProductByMSAID, fetchAllProductOnlyMSAID, fetchProductsByCategoryOnlyMSAID, fetchProductsByCategory, searchCategoryProducts, updateExistingProduct };

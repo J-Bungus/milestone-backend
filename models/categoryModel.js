@@ -41,7 +41,7 @@ class CategoryModel {
   async editCategory(category) {
     const query = await pool.query(`
       UPDATE ${this.table}
-      SET name = '${category.name}', is_leaf = '${category.is_leaf}', parent_id = ${category.parent_id}
+      SET name = '${category.name}', is_leaf = '${category.is_leaf}', parent_id = ${category.parent_id}, order_index = ${category.order_index}
       WHERE id = ${category.id}
       RETURNING id
     `);

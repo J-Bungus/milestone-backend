@@ -92,11 +92,33 @@ class ProductModel {
     return query.rows[0];
   }
 
+  async updateProduct(product) {
+    const query = await pool.query(`
+      UPDATE "${this.table}"
+      SET 
+        name = '${product.name}',
+        description = '${product.description}', 
+        unit_price = ${product.unit_price}, 
+        unit_type = '${product.unit_type}', 
+        has_package = '${product.has_package}', 
+        has_big_package = '${product.has_big_package}', 
+        package_price = ${product.package_price}, 
+        big_package_price = ${product.big_package_price}, 
+        package_size = ${product.package_size}, 
+        big_package_size = ${product.big_package_size}
+      WHERE msa_id = '${product.msa_id}'
+      RETURNING *;
+    `);
+
+    return query.rows[0];
+  }
+
   async getProductByMSAID(msa_id) {
     const query = await pool.query(`
       SELECT "${this.table}".*, 
         ARRAY_AGG(DISTINCT "Images".source) as images,
-        ARRAY_AGG(DISTINCT "Categories".name) as categories
+        ARRAY_AGG(DISTINCT "Categories".name) as categories,
+        ARRAY_AGG(DISTINCT "Categories".id) as category_ids
       FROM "${this.table}"
       JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id

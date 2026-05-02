@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS "Categories" (
 	name VARCHAR(255) NOT NULL,
 	parent_id INTEGER REFERENCES "Categories"(id) ON DELETE CASCADE,
     is_leaf VARCHAR(10) DEFAULT 'false',
-	order_index INTEGER DEFAULT 0
+	order_index DECIMAL(8,4) DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS "ProductCategory" (
