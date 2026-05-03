@@ -95,7 +95,7 @@ const addNewProduct = asyncHandler(async (req, res) => {
 
 const updateExistingProduct = asyncHandler(async (req, res) => {
   const product = JSON.parse(req.body.product);
-
+  console.log(product);
   const category_ids = product.category_ids;
   delete product.category_ids;
 
