@@ -37,7 +37,8 @@ const fetchProductsBySearchTerm = asyncHandler(async (req, res) => {
 const addNewProduct = asyncHandler(async (req, res) => {
   const product = JSON.parse(req.body.product);
 
-  product.unit_type = product.unit_type || "pcs";
+  product.unit_type = product.unit_type || "pcs/Box";
+  product.big_unit_type = product.big_unit_type || "bxs/Case";
   product.unit_price = product.unit_price || 0;
 
   const existingProduct = await ProductModel.getProductByMSAID(product.msa_id);
@@ -98,7 +99,8 @@ const updateExistingProduct = asyncHandler(async (req, res) => {
   const category_ids = product.category_ids;
   delete product.category_ids;
 
-  product.unit_type = product.unit_type || "pcs";
+  product.unit_type = product.unit_type || "pcs/Box";
+  product.big_unit_type = product.big_unit_type || "bxs/Case";
   product.unit_price = product.unit_price || 0;
 
   try {
@@ -129,7 +131,8 @@ const updateExistingProduct = asyncHandler(async (req, res) => {
       for (const file of req.files) {
         const filePath = file.originalname.split("/");
         const filename = filePath[filePath.length - 1];
-        const blob = bucket.file(`${updatedProduct.msa_id}-${filename}`);
+        const safeMsaId = updatedProduct.msa_id.replace(/[^\w-]/g, '');
+        const blob = bucket.file(`${safeMsaId}-${filename}`);
         const blobStream = blob.createWriteStream({
           resumable: false,
           contentType: file.mimetype

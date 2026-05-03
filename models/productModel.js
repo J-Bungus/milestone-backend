@@ -63,15 +63,15 @@ class ProductModel {
     const query = await pool.query(`
       INSERT INTO "${this.table}"
       (
-        msa_id, name, description, unit_price, unit_type, 
+        msa_id, name, description, unit_price, unit_type, big_unit_type,
         has_package, has_big_package, package_price, 
         big_package_price, package_size, big_package_size
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *;
     `, [
       product.msa_id, product.name, product.description, product.unit_price, 
-      product.unit_type, product.has_package, product.has_big_package, 
+      product.unit_type, product.big_unit_type, product.has_package, product.has_big_package, 
       product.package_price, product.big_package_price, product.package_size, 
       product.big_package_size
     ]);
@@ -87,24 +87,24 @@ class ProductModel {
         description = $2, 
         unit_price = $3, 
         unit_type = $4, 
-        has_package = $5, 
-        has_big_package = $6, 
-        package_price = $7, 
-        big_package_price = $8, 
-        package_size = $9, 
-        big_package_size = $10
-      WHERE msa_id = $11
+        big_unit_type = $5,
+        has_package = $6, 
+        has_big_package = $7, 
+        package_price = $8, 
+        big_package_price = $9, 
+        package_size = $10, 
+        big_package_size = $11
+      WHERE msa_id = $12
       RETURNING *;
     `, [
       product.name, product.description, product.unit_price, product.unit_type, 
-      product.has_package, product.has_big_package, product.package_price, 
+      product.big_unit_type, product.has_package, product.has_big_package, product.package_price, 
       product.big_package_price, product.package_size, product.big_package_size, 
       product.msa_id
     ]);
 
     return query.rows[0];
   }
-
   async getProductByMSAID(msa_id) {
     console.log(msa_id);
     const query = await pool.query(`
