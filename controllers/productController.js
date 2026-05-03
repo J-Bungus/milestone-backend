@@ -203,6 +203,59 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
+const bulkDeleteProducts = asyncHandler(async (req, res) => {
+  const { msa_ids } = req.body;
+
+  if (!msa_ids || !Array.isArray(msa_ids) || msa_ids.length === 0) {
+    res.status(400);
+    throw new Error("No product IDs provided for deletion.");
+  }
+
+  try {
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const msa_id of msa_ids) {
+      try {
+        const product = await ProductModel.getProductByMSAID(msa_id);
+        
+        if (!product) {
+          failCount++;
+          continue; // Skip to the next one if it doesn't exist
+        }
+
+        // 1. Delete associated images from the bucket
+        if (product.images && product.images.length > 0) {
+          for (const filename of product.images) {
+            try {
+              await bucket.file(filename).delete();
+              console.log(`Deleted ${filename} from bucket.`);
+            } catch (err) {
+              console.error(`Failed to delete ${filename} from bucket:`, err);
+            }
+          }
+        }
+
+        await ProductModel.deleteProduct(product.id);
+        successCount++;
+        
+      } catch (err) {
+        console.error(`Failed to process deletion for product ${msa_id}:`, err);
+        failCount++;
+      }
+    }
+
+    res.status(200).json({ 
+      message: `Successfully deleted ${successCount} products. Failed to delete ${failCount} products.` 
+    });
+
+  } catch (error) {
+    console.error("Bulk delete critical error:", error);
+    res.status(500);
+    throw new Error("A server error occurred during bulk deletion.");
+  }
+});
+
 const fetchProductByMSAID = asyncHandler(async (req, res) => {
   const { msa_id } = req.params;
 
@@ -239,19 +292,6 @@ const fetchProductsByCategoryOnlyMSAID = asyncHandler(async (req, res) => {
     throw new Error("An error occurred while fetching products");
   }
 });
-
-// const fetchProductsByCategory = asyncHandler(async (req, res) => {
-//   const { category_id, page, itemsPerPage } = req.query;
-//   try {
-//     const products = await ProductModel.getProductByCategory(category_id, page, itemsPerPage);
-//     const count = await ProductModel.countProductByCategory(category_id);
-//     res.status(200).json({ products, totalProducts: count});
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500);
-//     throw new Error("An error occurred while fetching products");
-//   }
-// });
 
 // Find your existing controller that fetches products by category
 const fetchProductsByCategory = asyncHandler(async (req, res) => {
@@ -309,4 +349,4 @@ const searchCategoryProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { fetchAllProducts, fetchProductsBySearchTerm, addNewProduct, fetchProductByMSAID, fetchAllProductOnlyMSAID, fetchProductsByCategoryOnlyMSAID, fetchProductsByCategory, searchCategoryProducts, updateExistingProduct, deleteProduct };
+module.exports = { fetchAllProducts, fetchProductsBySearchTerm, addNewProduct, fetchProductByMSAID, fetchAllProductOnlyMSAID, fetchProductsByCategoryOnlyMSAID, fetchProductsByCategory, searchCategoryProducts, updateExistingProduct, deleteProduct, bulkDeleteProducts };

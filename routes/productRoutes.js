@@ -9,7 +9,8 @@ const {
   fetchProductsByCategory,
   searchCategoryProducts,
   updateExistingProduct,
-  deleteProduct
+  deleteProduct,
+  bulkDeleteProducts
 } = require("../controllers/productController");
 const {
   validateToken,
@@ -23,6 +24,7 @@ router.get("/search", fetchProductsBySearchTerm);
 router.post("/create", validateAdminToken, upload.array("images"), addNewProduct);
 router.patch("/update/:msa_id", validateAdminToken, upload.array("images"), updateExistingProduct);
 router.delete("/delete/:msa_id", validateAdminToken, deleteProduct);
+router.patch("/bulk-delete", validateAdminToken, bulkDeleteProducts);
 router.get("/specific/:msa_id", fetchProductByMSAID);
 router.get("/all-msa_id", validateAdminToken, fetchAllProductOnlyMSAID);
 router.get("/all/category/:category_id", fetchProductsByCategoryOnlyMSAID);
