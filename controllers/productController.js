@@ -95,7 +95,32 @@ const addNewProduct = asyncHandler(async (req, res) => {
 const updateExistingProduct = asyncHandler(async (req, res) => {
   const product = JSON.parse(req.body.product);
 
+  const category_ids = product.category_ids;
+  delete product.category_ids;
+
+  product.unit_type = product.unit_type || "pcs";
+  product.unit_price = product.unit_price || 0;
+
   try {
+    const existingProduct = await ProductModel.getProductByMSAID(product.msa_id);
+
+    const keptImages = (product.images || []).filter(img => !img.startsWith('blob:'));
+
+    const imagesToDelete = existingProduct.images.filter(
+      (oldImg) => !keptImages.includes(oldImg)
+    );
+
+    for (const filename of imagesToDelete) {
+      try {
+        await bucket.file(filename).delete();
+        console.log(`Successfully deleted ${filename} from bucket.`);
+        
+        await ProductModel.deleteImageByName(filename); 
+      } catch (err) {
+        console.error(`Failed to delete ${filename} from bucket:`, err);
+      }
+    }
+
     delete product.images;
     const updatedProduct = await ProductModel.updateProduct(product);
 
@@ -128,13 +153,13 @@ const updateExistingProduct = asyncHandler(async (req, res) => {
     }
 
     await ProductCategoryModel.deleteCategoriesByProductId(updatedProduct.id);
-    for (const category_id of product.categories) {
+    for (const category_id of category_ids) {
       await ProductCategoryModel.assignCategory(updatedProduct.id, category_id);
     }
 
     res.status(200).json({ product: {
       ...updatedProduct,
-      images: fileUrls
+      images: req.files && req.files.length > 0 ? fileUrls : keptImages
     }});  
   } catch (error) {
     console.error(error);
@@ -143,6 +168,37 @@ const updateExistingProduct = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteProduct = asyncHandler(async (req, res) => {
+  const { msa_id } = req.params;
+
+  try {
+    const product = await ProductModel.getProductByMSAID(msa_id);
+    
+    if (!product) {
+      res.status(404);
+      throw new Error("Product not found");
+    }
+
+    if (product.images && product.images.length > 0) {
+      for (const filename of product.images) {
+        try {
+          await bucket.file(filename).delete();
+          console.log(`Deleted ${filename} from bucket.`);
+        } catch (err) {
+          console.error(`Failed to delete ${filename} from bucket:`, err);
+        }
+      }
+    }
+
+    await ProductModel.deleteProduct(product.id);
+
+    res.status(200).json({ message: "Product and all associated images deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500);
+    throw new Error("An error occurred while deleting the product");
+  }
+});
 
 const fetchProductByMSAID = asyncHandler(async (req, res) => {
   const { msa_id } = req.params;
@@ -250,4 +306,4 @@ const searchCategoryProducts = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { fetchAllProducts, fetchProductsBySearchTerm, addNewProduct, fetchProductByMSAID, fetchAllProductOnlyMSAID, fetchProductsByCategoryOnlyMSAID, fetchProductsByCategory, searchCategoryProducts, updateExistingProduct };
+module.exports = { fetchAllProducts, fetchProductsBySearchTerm, addNewProduct, fetchProductByMSAID, fetchAllProductOnlyMSAID, fetchProductsByCategoryOnlyMSAID, fetchProductsByCategory, searchCategoryProducts, updateExistingProduct, deleteProduct };

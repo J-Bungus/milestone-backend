@@ -26,6 +26,20 @@ class ProductCategoryModel {
       WHERE product_id = ${product_id} AND category_id = ${category_id}
     `);
   }
+
+  async deleteCategoriesByProductId(product_id) {
+    const query = await pool.query(`
+      DELETE FROM ${this.table}
+      WHERE product_id = ${product_id}
+    `);
+  }
+
+  async deleteCategoriesByCategoryId(category_id) {
+    const query = await pool.query(`
+      DELETE FROM ${this.table}
+      WHERE category_id = ${category_id}
+    `);
+  }
 }
 
 module.exports = ProductCategoryModel;

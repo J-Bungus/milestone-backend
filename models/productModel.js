@@ -25,8 +25,8 @@ class ProductModel {
   async getAllWithImages(page, itemsPerPage) {
     const query = await pool.query(`
       SELECT "${this.table}".*,     
-        ARRAY_AGG(DISTINCT "Images".source) as images,
-        ARRAY_AGG(DISTINCT "Categories".name) as categories
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Images".source), NULL), '{}') as images,
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Categories".name), NULL), '{}') as categories
       FROM "${this.table}"
       LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
@@ -42,10 +42,10 @@ class ProductModel {
   async getBySearchTerm(page, itemsPerPage, searchTerm) {
     const query = await pool.query(`
       SELECT "${this.table}".*,        
-        ARRAY_AGG(DISTINCT "Images".source) as images,
-        ARRAY_AGG(DISTINCT "Categories".name) as categories
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Images".source), NULL), '{}') as images,
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Categories".name), NULL), '{}') as categories
       FROM "${this.table}"
-      JOIN "Images" ON "${this.table}".id = "Images".product_id
+      LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       WHERE LOWER("${this.table}".msa_id) LIKE '%${searchTerm}%' OR LOWER("${this.table}".name) LIKE '%${searchTerm}%'
@@ -114,13 +114,14 @@ class ProductModel {
   }
 
   async getProductByMSAID(msa_id) {
+    console.log(msa_id);
     const query = await pool.query(`
       SELECT "${this.table}".*, 
-        ARRAY_AGG(DISTINCT "Images".source) as images,
-        ARRAY_AGG(DISTINCT "Categories".name) as categories,
-        ARRAY_AGG(DISTINCT "Categories".id) as category_ids
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Images".source), NULL), '{}') as images,
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Categories".name), NULL), '{}') as categories,
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Categories".id), NULL), '{}') as category_ids
       FROM "${this.table}"
-      JOIN "Images" ON "${this.table}".id = "Images".product_id
+      LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       WHERE msa_id = '${msa_id}'
@@ -144,10 +145,10 @@ class ProductModel {
   async getProductByCategory(category_id, page, itemsPerPage) {
     const query = await pool.query(`
       SELECT "${this.table}".*, 
-        ARRAY_AGG(DISTINCT "Images".source) as images,
-        ARRAY_AGG(DISTINCT "Categories".name) as categories
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Images".source), NULL), '{}') as images,
+        COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Categories".name), NULL), '{}') as categories
       FROM "${this.table}"
-      JOIN "Images" ON "${this.table}".id = "Images".product_id
+      LEFTJOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       WHERE "${this.table}".id IN (
@@ -274,6 +275,22 @@ class ProductModel {
       console.error("Error counting category products:", error);
       throw error;
     }
+  }
+
+  async deleteImageByName(filename) {
+    const query = await pool.query(`
+      DELETE FROM "Images"
+      WHERE source = '${filename}'
+    `);
+    return query.rows;
+  }
+
+  async deleteProduct(product_id) {
+    const query = await pool.query(`
+      DELETE FROM "${this.table}"
+      WHERE id = ${product_id}
+    `);
+    return query.rows;
   }
 }
 

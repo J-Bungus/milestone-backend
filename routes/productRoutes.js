@@ -7,7 +7,9 @@ const {
   fetchAllProductOnlyMSAID,
   fetchProductsByCategoryOnlyMSAID,
   fetchProductsByCategory,
-  searchCategoryProducts
+  searchCategoryProducts,
+  updateExistingProduct,
+  deleteProduct
 } = require("../controllers/productController");
 const {
   validateToken,
@@ -19,6 +21,8 @@ const router = express.Router();
 router.get("/all", fetchAllProducts);
 router.get("/search", fetchProductsBySearchTerm);
 router.post("/create", validateAdminToken, upload.array("images"), addNewProduct);
+router.put("/update/:msa_id", validateAdminToken, upload.array("images"), updateExistingProduct);
+router.delete("/delete/:msa_id", validateAdminToken, deleteProduct);
 router.get("/specific/:msa_id", fetchProductByMSAID);
 router.get("/all-msa_id", validateAdminToken, fetchAllProductOnlyMSAID);
 router.get("/all/category/:category_id", fetchProductsByCategoryOnlyMSAID);
