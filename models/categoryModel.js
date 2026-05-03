@@ -4,36 +4,42 @@ class CategoryModel {
   }
 
   async getCategoriesByLevel(parent_id = null) {
-    const query = parent_id !== null
-      ? await pool.query(`
+    let query;
+    if (parent_id !== null) {
+      query = await pool.query(`
         SELECT * FROM ${this.table}
-        WHERE parent_id = ${parent_id}
+        WHERE parent_id = $1
         ORDER BY order_index
-      `)
-      : await pool.query(`
+      `, [parent_id]);
+    } else {
+      query = await pool.query(`
         SELECT * FROM ${this.table}
         WHERE parent_id IS NULL
         ORDER BY order_index
-        `);
+      `);
+    }
       
-      console.log(query.rows);
+    console.log(query.rows);
     return query.rows;
   }
 
   async addCategory(category, parent_id = null) {
-    const query = parent_id !== null
-      ? await pool.query(`
+    let query;
+    if (parent_id !== null) {
+      query = await pool.query(`
           INSERT INTO ${this.table}
           (name, is_leaf, parent_id)
-          VALUES ('${category.name}', '${category.is_leaf}', ${parent_id})
+          VALUES ($1, $2, $3)
           RETURNING id
-        `)
-      : await pool.query(`
+        `, [category.name, category.is_leaf, parent_id]);
+    } else {
+      query = await pool.query(`
           INSERT INTO ${this.table}
           (name, is_leaf)
-          VALUES ('${category.name}', '${category.is_leaf}')
+          VALUES ($1, $2)
           RETURNING id
-        `);
+        `, [category.name, category.is_leaf]);
+    }
 
     return query.rows[0];
   }
@@ -41,19 +47,19 @@ class CategoryModel {
   async editCategory(category) {
     const query = await pool.query(`
       UPDATE ${this.table}
-      SET name = '${category.name}', is_leaf = '${category.is_leaf}', parent_id = ${category.parent_id}, order_index = ${category.order_index}
-      WHERE id = ${category.id}
+      SET name = $1, is_leaf = $2, parent_id = $3, order_index = $4
+      WHERE id = $5
       RETURNING id
-    `);
+    `, [category.name, category.is_leaf, category.parent_id, category.order_index, category.id]);
 
     return query.rows[0];
   }
 
   async deleteCategory(category_id) {
-    const query = await pool.query(`
+    await pool.query(`
       DELETE FROM ${this.table}
-      WHERE id = ${category_id}
-    `);
+      WHERE id = $1
+    `, [category_id]);
   }
 
   async getAllCategories() {
@@ -77,19 +83,16 @@ class CategoryModel {
   async getLeafCategoriesWithPath() {
     const query = `
       WITH RECURSIVE CategoryTree AS (
-        -- Base case: Top-level categories
         SELECT id, name, parent_id, name::text AS path
         FROM "Categories"
         WHERE parent_id IS NULL
         
         UNION ALL
         
-        -- Recursive step: Append child name to parent's path
         SELECT c.id, c.name, c.parent_id, ct.path || ' > ' || c.name
         FROM "Categories" c
         INNER JOIN CategoryTree ct ON c.parent_id = ct.id
       )
-      -- Select only the leaf nodes (categories that have no children)
       SELECT id, name, path 
       FROM CategoryTree ct
       WHERE NOT EXISTS (

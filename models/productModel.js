@@ -16,8 +16,9 @@ class ProductModel {
     const count = await pool.query(`
       SELECT count(id)
       FROM "${this.table}"
-      WHERE LOWER("${this.table}".msa_id) LIKE '%${searchTerm}%' OR LOWER("${this.table}".name) LIKE '%${searchTerm}%'
-    `);
+      WHERE LOWER("${this.table}".msa_id) LIKE LOWER($1) 
+         OR LOWER("${this.table}".name) LIKE LOWER($1)
+    `, [`%${searchTerm}%`]);
 
     return count.rows[0].count;
   }
@@ -33,8 +34,8 @@ class ProductModel {
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       GROUP BY "${this.table}".id
       ORDER BY "${this.table}".id
-      LIMIT ${itemsPerPage} OFFSET ${page * itemsPerPage}
-    `);
+      LIMIT $1 OFFSET $2
+    `, [itemsPerPage, page * itemsPerPage]);
 
     return query.rows;
   }
@@ -48,11 +49,12 @@ class ProductModel {
       LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
-      WHERE LOWER("${this.table}".msa_id) LIKE '%${searchTerm}%' OR LOWER("${this.table}".name) LIKE '%${searchTerm}%'
+      WHERE LOWER("${this.table}".msa_id) LIKE LOWER($1) 
+         OR LOWER("${this.table}".name) LIKE LOWER($1)
       GROUP BY "${this.table}".id
       ORDER BY "${this.table}".id
-      LIMIT ${itemsPerPage} OFFSET ${page * itemsPerPage}
-    `);
+      LIMIT $2 OFFSET $3
+    `, [`%${searchTerm}%`, itemsPerPage, page * itemsPerPage]);
 
     return query.rows;
   }
@@ -61,33 +63,18 @@ class ProductModel {
     const query = await pool.query(`
       INSERT INTO "${this.table}"
       (
-        msa_id, 
-        name, 
-        description, 
-        unit_price, 
-        unit_type, 
-        has_package, 
-        has_big_package, 
-        package_price, 
-        big_package_price, 
-        package_size, 
-        big_package_size
+        msa_id, name, description, unit_price, unit_type, 
+        has_package, has_big_package, package_price, 
+        big_package_price, package_size, big_package_size
       )
-      VALUES (
-        '${product.msa_id}', 
-        '${product.name}', 
-        '${product.description}', 
-        ${product.unit_price}, 
-        '${product.unit_type}', 
-        '${product.has_package}', 
-        '${product.has_big_package}',
-        ${product.package_price},
-        ${product.big_package_price},
-        ${product.package_size},
-        ${product.big_package_size}
-      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
-    `);
+    `, [
+      product.msa_id, product.name, product.description, product.unit_price, 
+      product.unit_type, product.has_package, product.has_big_package, 
+      product.package_price, product.big_package_price, product.package_size, 
+      product.big_package_size
+    ]);
 
     return query.rows[0];
   }
@@ -96,19 +83,24 @@ class ProductModel {
     const query = await pool.query(`
       UPDATE "${this.table}"
       SET 
-        name = '${product.name}',
-        description = '${product.description}', 
-        unit_price = ${product.unit_price}, 
-        unit_type = '${product.unit_type}', 
-        has_package = '${product.has_package}', 
-        has_big_package = '${product.has_big_package}', 
-        package_price = ${product.package_price}, 
-        big_package_price = ${product.big_package_price}, 
-        package_size = ${product.package_size}, 
-        big_package_size = ${product.big_package_size}
-      WHERE msa_id = '${product.msa_id}'
+        name = $1,
+        description = $2, 
+        unit_price = $3, 
+        unit_type = $4, 
+        has_package = $5, 
+        has_big_package = $6, 
+        package_price = $7, 
+        big_package_price = $8, 
+        package_size = $9, 
+        big_package_size = $10
+      WHERE msa_id = $11
       RETURNING *;
-    `);
+    `, [
+      product.name, product.description, product.unit_price, product.unit_type, 
+      product.has_package, product.has_big_package, product.package_price, 
+      product.big_package_price, product.package_size, product.big_package_size, 
+      product.msa_id
+    ]);
 
     return query.rows[0];
   }
@@ -124,20 +116,19 @@ class ProductModel {
       LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
-      WHERE msa_id = '${msa_id}'
+      WHERE msa_id = $1
       GROUP BY "${this.table}".id
-    `);
+    `, [msa_id]);
 
     return query.rows[0];
   }
 
   async uploadImage(imageUrl, product_id) {
     const query = await pool.query(`
-      INSERT INTO "Images"
-      (product_id, source)
-      VALUES (${product_id}, '${imageUrl}')
+      INSERT INTO "Images" (product_id, source)
+      VALUES ($1, $2)
       RETURNING source
-    `);
+    `, [product_id, imageUrl]);
 
     return query.rows[0];
   }
@@ -148,18 +139,18 @@ class ProductModel {
         COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Images".source), NULL), '{}') as images,
         COALESCE(ARRAY_REMOVE(ARRAY_AGG(DISTINCT "Categories".name), NULL), '{}') as categories
       FROM "${this.table}"
-      LEFTJOIN "Images" ON "${this.table}".id = "Images".product_id
+      LEFT JOIN "Images" ON "${this.table}".id = "Images".product_id
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       WHERE "${this.table}".id IN (
         SELECT product_id
         FROM "ProductCategory"
-        WHERE category_id = ${category_id} 
+        WHERE category_id = $1 
       )
       GROUP BY "${this.table}".id
       ORDER BY "${this.table}".id
-      LIMIT ${itemsPerPage} OFFSET ${page * itemsPerPage}
-    `);
+      LIMIT $2 OFFSET $3
+    `, [category_id, itemsPerPage, page * itemsPerPage]);
 
     return query.rows;
   }
@@ -169,8 +160,8 @@ class ProductModel {
       SELECT count("${this.table}".id)
       FROM "${this.table}"
       JOIN "ProductCategory" as pc ON pc.product_id = "${this.table}".id
-      WHERE pc.category_id = ${category_id}
-    `);
+      WHERE pc.category_id = $1
+    `, [category_id]);
 
     return count.rows[0].count;
   }
@@ -180,8 +171,8 @@ class ProductModel {
       SELECT p.id, msa_id 
       FROM "${this.table}" as p
       JOIN "ProductCategory" as pc ON pc.product_id = p.id
-      WHERE pc.category_id = ${category_id}
-    `);
+      WHERE pc.category_id = $1
+    `, [category_id]);
     console.log(query);
     return query.rows;
   }
@@ -193,26 +184,22 @@ class ProductModel {
     return query.rows;
   }
 
-  // --- 1. Fetching the filtered products (Replaces your current function) ---
   async getProductsByCategoryAndDescendants(categoryId, page = 0, itemsPerPage = 40, searchTerm = "") {
     const offset = page * itemsPerPage;
-    const values = [categoryId]; // $1
+    const values = [categoryId]; 
     
     let query = `
       WITH RECURSIVE CategoryTree AS (
-        -- Base case: Get the initial parent category
         SELECT id FROM "Categories" 
         WHERE id = $1
         
         UNION ALL
         
-        -- Recursive step: Get all children
         SELECT c.id FROM "Categories" c
         INNER JOIN CategoryTree ct ON c.parent_id = ct.id
       )
       SELECT 
         p.*,
-        -- Aggregate the images into a JSON array using your specific schema
         COALESCE(
           json_agg(
             pi.source
@@ -225,19 +212,15 @@ class ProductModel {
       WHERE pc.category_id IN (SELECT id FROM CategoryTree)
     `;
 
-    // If the user typed a search term, add the SQL ILIKE filter
     if (searchTerm) {
-      // Searching by product name OR msa_id. (Adjust column names if needed!)
       query += ` AND (p.name ILIKE $2 OR p.msa_id ILIKE $2)`;
-      values.push(`%${searchTerm}%`); // $2
+      values.push(`%${searchTerm}%`); 
     }
 
-    // Add grouping, limits, and offsets for pagination
     query += ` GROUP BY p.id LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     values.push(itemsPerPage, offset);
 
     try {
-      // Execute with the parameters array to prevent SQL injection
       const result = await pool.query(query, values);
       return result.rows;
     } catch (error) {
@@ -246,9 +229,8 @@ class ProductModel {
     }
   }
 
-  // --- 2. Getting the total count so the Pagination UI knows how many pages there are ---
   async countProductsByCategoryAndDescendants(categoryId, searchTerm = "") {
-    const values = [categoryId]; // $1
+    const values = [categoryId]; 
     
     let query = `
       WITH RECURSIVE CategoryTree AS (
@@ -262,10 +244,9 @@ class ProductModel {
       WHERE pc.category_id IN (SELECT id FROM CategoryTree)
     `;
 
-    // Make sure the count query uses the exact same filter!
     if (searchTerm) {
       query += ` AND (p.name ILIKE $2 OR p.msa_id ILIKE $2)`;
-      values.push(`%${searchTerm}%`); // $2
+      values.push(`%${searchTerm}%`); 
     }
 
     try {
@@ -280,16 +261,16 @@ class ProductModel {
   async deleteImageByName(filename) {
     const query = await pool.query(`
       DELETE FROM "Images"
-      WHERE source = '${filename}'
-    `);
+      WHERE source = $1
+    `, [filename]);
     return query.rows;
   }
 
   async deleteProduct(product_id) {
     const query = await pool.query(`
       DELETE FROM "${this.table}"
-      WHERE id = ${product_id}
-    `);
+      WHERE id = $1
+    `, [product_id]);
     return query.rows;
   }
 }
