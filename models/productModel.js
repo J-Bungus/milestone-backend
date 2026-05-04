@@ -33,7 +33,7 @@ class ProductModel {
       LEFT JOIN "ProductCategory" ON "${this.table}".id = "ProductCategory".product_id
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       GROUP BY "${this.table}".id
-      ORDER BY "${this.table}".id
+      ORDER BY LENGTH("${this.table}".msa_id), "${this.table}".msa_id
       LIMIT $1 OFFSET $2
     `, [itemsPerPage, page * itemsPerPage]);
 
@@ -52,7 +52,7 @@ class ProductModel {
       WHERE LOWER("${this.table}".msa_id) LIKE LOWER($1) 
          OR LOWER("${this.table}".name) LIKE LOWER($1)
       GROUP BY "${this.table}".id
-      ORDER BY "${this.table}".id
+      ORDER BY LENGTH("${this.table}".msa_id), "${this.table}".msa_id
       LIMIT $2 OFFSET $3
     `, [`%${searchTerm}%`, itemsPerPage, page * itemsPerPage]);
 
@@ -118,6 +118,7 @@ class ProductModel {
       LEFT JOIN "Categories" ON "ProductCategory".category_id = "Categories".id
       WHERE msa_id = $1
       GROUP BY "${this.table}".id
+      ORDER BY LENGTH("${this.table}".msa_id), "${this.table}".msa_id
     `, [msa_id]);
 
     return query.rows[0];
@@ -148,7 +149,7 @@ class ProductModel {
         WHERE category_id = $1 
       )
       GROUP BY "${this.table}".id
-      ORDER BY "${this.table}".id
+      ORDER BY LENGTH("${this.table}".msa_id), "${this.table}".msa_id
       LIMIT $2 OFFSET $3
     `, [category_id, itemsPerPage, page * itemsPerPage]);
 
@@ -172,6 +173,7 @@ class ProductModel {
       FROM "${this.table}" as p
       JOIN "ProductCategory" as pc ON pc.product_id = p.id
       WHERE pc.category_id = $1
+      ORDER BY LENGTH(p.msa_id), p.msa_id
     `, [category_id]);
     console.log(query);
     return query.rows;
@@ -180,6 +182,7 @@ class ProductModel {
   async getAllOnlyMSAID() {
     const query = await pool.query(`
       SELECT id, msa_id FROM "${this.table}"
+      ORDER BY LENGTH(msa_id), msa_id
     `);
     return query.rows;
   }
@@ -217,7 +220,7 @@ class ProductModel {
       values.push(`%${searchTerm}%`); 
     }
 
-    query += ` GROUP BY p.id LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    query += ` GROUP BY p.id ORDER BY LENGTH(p.msa_id), p.msa_id LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
     values.push(itemsPerPage, offset);
 
     try {
